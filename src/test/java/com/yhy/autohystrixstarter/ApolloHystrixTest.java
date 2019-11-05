@@ -3,6 +3,8 @@ package com.yhy.autohystrixstarter;
 
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 import com.yhy.autohystrixstarter.core.ApolloHystrixConfPropertyStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +47,6 @@ public class ApolloHystrixTest {
   public void testApolloHystrix() {
 
     Map<String, String> configMap = new HashMap<>();
-    configMap.put("hystrix.command." + "hello" + ".circuitBreaker.forceOpen", "true");
     configMap.put("hystrix.command." + "hello" + ".execution.isolation.strategy", "THREAD");
     configMap.put("hystrix.command." + "hello" + ".execution.isolation.thread.timeoutInMilliseconds", "1000");
     configMap.put("hystrix.command." + "hello" + ".execution.isolation.semaphore.maxConcurrentRequests", "10");
@@ -108,4 +109,40 @@ public class ApolloHystrixTest {
 
   }
 
+  @Test
+  public void testApolloThreadPool() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("hystrix.threadpool.default.coreSize", "33");
+    configMap.put("hystrix.threadpool.default.maximumSize", "33");
+    configMap.put("hystrix.threadpool.default.maxQueueSize", "33");
+    configMap.put("hystrix.threadpool.default.queueSizeRejectionThreshold", "33");
+    configMap.put("hystrix.threadpool.default.keepAliveTimeMinutes", "33");
+    configMap.put("hystrix.threadpool.default.allowMaximumSizeToDivergeFromCoreSize", "false");
+    configMap.put("hystrix.threadpool.default.metrics.rollingStats.timeInMilliseconds", "33");
+    //default 10
+//    configMap.put("hystrix.threadpool.default.metrics.rollingStats.numBuckets","33");
+    configMap.put("hystrix.threadpool.hello.coreSize", "22");
+
+    MockApolloConfig config = new MockApolloConfig(configMap);
+    HystrixThreadPoolProperties.Setter setter = mock(HystrixThreadPoolProperties.Setter.class);
+    ApolloHystrixConfPropertyStrategy strategy = new ApolloHystrixConfPropertyStrategy(config);
+    HystrixThreadPoolKey key = HystrixThreadPoolKey.Factory.asKey("hello");
+    HystrixThreadPoolProperties poolProperties = strategy.getThreadPoolProperties(key, setter);
+    //有key值时取key值
+    assertEquals(Integer.valueOf(22), poolProperties.coreSize().get());
+    //没key时取default值
+    assertEquals(Integer.valueOf(22), poolProperties.actualMaximumSize());
+    assertEquals(Integer.valueOf(33), poolProperties.maxQueueSize().get());
+    //当这个值设置成false时actualMaximumSize值为coreSize,为true时actualMaximumSize值为两者最大值
+    assertEquals(false, poolProperties.getAllowMaximumSizeToDivergeFromCoreSize().get());
+    assertEquals(Integer.valueOf(22), poolProperties.actualMaximumSize());
+    assertEquals(Integer.valueOf(33), poolProperties.queueSizeRejectionThreshold().get());
+    assertEquals(Integer.valueOf(33), poolProperties.keepAliveTimeMinutes().get());
+
+    assertEquals(Integer.valueOf(33), poolProperties.metricsRollingStatisticalWindowInMilliseconds().get());
+    //都没有时取默认值
+    assertEquals(Integer.valueOf(10), poolProperties.metricsRollingStatisticalWindowBuckets().get());
+
+
+  }
 }

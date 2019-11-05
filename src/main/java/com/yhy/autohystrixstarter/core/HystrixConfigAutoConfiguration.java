@@ -7,6 +7,7 @@ import com.netflix.hystrix.strategy.concurrency.HystrixConcurrencyStrategy;
 import com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifier;
 import com.netflix.hystrix.strategy.executionhook.HystrixCommandExecutionHook;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
+import com.yhy.autohystrixstarter.actuate.ApolloHystrixControllerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +27,14 @@ public class HystrixConfigAutoConfiguration {
   private String hysrixNameSpace;
 
   @Bean
+  public ApolloHystrixControllerEndpoint getApolloHystrixControllerEndpoint() {
+    return new ApolloHystrixControllerEndpoint();
+  }
+
+  @Bean
   public ApolloHystrixConfPropertyStrategy getApolloHystrixConfPropertyStrategy() {
     Config config = ConfigService.getConfig(hysrixNameSpace);
+    enableListener(config);
     ApolloHystrixConfPropertyStrategy strategy = new ApolloHystrixConfPropertyStrategy(config);
     HystrixMetricsPublisher hystrixMetricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
     HystrixEventNotifier eventNotifier = HystrixPlugins.getInstance().getEventNotifier();
@@ -41,5 +48,10 @@ public class HystrixConfigAutoConfiguration {
     HystrixPlugins.getInstance().registerCommandExecutionHook(commandExecutionHook);
     logger.info("init ApolloHystrixConfPropertyStrategy ok");
     return strategy;
+  }
+
+  private void enableListener(Config config) {
+    config.addChangeListener(
+      changeEvent -> changeEvent.changedKeys().forEach(key -> logger.info("key:{},value:{}", key, changeEvent.getChange(key))));
   }
 }
