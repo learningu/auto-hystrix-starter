@@ -14,7 +14,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@RestControllerEndpoint(id = "srch")
+@RestControllerEndpoint(id = "hystrix")
 public class ApolloHystrixControllerEndpoint {
 
 
@@ -22,7 +22,7 @@ public class ApolloHystrixControllerEndpoint {
 
   }
 
-  @GetMapping("/hystrix/command")
+  @GetMapping("command")
 
   public Map hystrixCommandConfig(@RequestParam(defaultValue = "default") String key) throws Exception {
     Map<String, Object> configMap = new LinkedHashMap<>();
@@ -66,7 +66,7 @@ public class ApolloHystrixControllerEndpoint {
     return configMap;
   }
 
-  @GetMapping("/hystrix/threadpool")
+  @GetMapping("threadpool")
   public Map hystrixThreadPoolConfig(@RequestParam(defaultValue = "default") String key) throws Exception {
     Map<String, Object> configMap = new LinkedHashMap<>();
     Class c = HystrixThreadPoolProperties.Setter.class;
